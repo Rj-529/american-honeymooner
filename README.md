@@ -87,3 +87,4 @@ Shared brand tokens should stay aligned across the main site, planner, and Shopi
 ## Domain
 
 Custom domain is purchased via Shopify DNS. Point DNS at Cloudflare Pages only after reviewing existing MX/SPF/DKIM and getting approval for changes. Prefer one primary hostname with HTTPS and an appropriate www ↔ apex redirect.
+
