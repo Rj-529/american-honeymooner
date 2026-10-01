@@ -2,6 +2,8 @@
 
 Marketing site for American Honeymooner — an old-money-inspired honeymoon brand experience.
 
+`planner/` is the Express honeymoon planner. Run it with `cd planner && npm install && npm run dev`. It stays deployed separately for now (Render); the marketing site at the repo root remains static on Cloudflare Pages.
+
 ## Current stack (launched)
 
 - Single-page static site (`index.html`) preserving the existing visual identity
