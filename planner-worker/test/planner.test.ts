@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseTripInput } from "../src/input";
+import { upstreamClientError } from "../src/errors";
+import { parseTripInput, todayInNewYork } from "../src/input";
 import { buildDemoSearch, demoPlaceSuggestions } from "../src/mock";
 import { isDemoMode } from "../src/secrets";
 import { GEMINI_MODEL, chooseGoForItPairing, geminiGenerateUrl, geminiRequestBody, kingRoomCandidate, luxuryHotelScore } from "../src/travel";
@@ -45,6 +46,57 @@ describe("demo mode", () => {
     expect(option.estimatedTripTotal).toBeGreaterThan(0);
     expect(option.whyItWorks.toLowerCase()).toContain("honeymoon");
     expect(option.whyItWorks).toContain("One special dinner");
+  });
+
+  it("rejects past, non-ISO, and out-of-order dates with plain English", () => {
+    const past = parseTripInput({
+      originName: "New York",
+      destinationName: "Paris",
+      startDate: "2026-09-01",
+      endDate: "2026-09-08",
+      budget: 8000,
+      travelers: 2,
+    }, new Date("2026-10-01T22:00:00Z"));
+    expect(past.ok).toBe(false);
+    if (!past.ok) expect(past.error).toBe("Pick a departure date today or later.");
+
+    const slashes = parseTripInput({
+      originName: "New York",
+      destinationName: "Paris",
+      startDate: "11/15/2026",
+      endDate: "11/22/2026",
+      budget: 8000,
+    }, new Date("2026-10-01T22:00:00Z"));
+    expect(slashes.ok).toBe(false);
+    if (!slashes.ok) expect(slashes.error).toBe("Use dates like 2026-11-15.");
+
+    const sameDay = parseTripInput({
+      originName: "New York",
+      destinationName: "Paris",
+      startDate: "2026-11-15",
+      endDate: "2026-11-15",
+      budget: 8000,
+    }, new Date("2026-10-01T22:00:00Z"));
+    expect(sameDay.ok).toBe(false);
+    if (!sameDay.ok) expect(sameDay.error).toBe("Pick a return date after your departure date.");
+
+    const today = todayInNewYork(new Date("2026-10-01T22:00:00Z"));
+    const future = parseTripInput({
+      originName: "New York",
+      destinationName: "Paris",
+      startDate: today,
+      endDate: "2026-11-15",
+      budget: 8000,
+      travelers: 2,
+    }, new Date("2026-10-01T22:00:00Z"));
+    expect(future.ok).toBe(true);
+    if (future.ok) expect(future.input.travelers).toBe(2);
+  });
+
+  it("maps Duffel and Nuitee 4xx to 400 and 5xx to 502", () => {
+    expect(upstreamClientError(422, "Departure date must be in the future").status).toBe(400);
+    expect(upstreamClientError(422, "Departure date must be in the future").message).toContain("future");
+    expect(upstreamClientError(503, "Nuitee rates (503): unavailable").status).toBe(502);
   });
 
   it("rejects an empty search the same way the Express planner does", () => {

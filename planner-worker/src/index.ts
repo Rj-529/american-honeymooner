@@ -38,6 +38,11 @@ app.get("/api/places", async (c) => {
     return c.json({ data });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Location search failed.";
+    if (error instanceof HttpError) {
+      if (error.status === 502) return c.json({ error: message }, 502);
+      if (error.status === 404) return c.json({ error: message }, 404);
+      return c.json({ error: message }, 400);
+    }
     console.error(JSON.stringify({ event: "places_error", message }));
     return c.json({ error: message }, 500);
   }
@@ -64,6 +69,7 @@ app.post("/api/search", async (c) => {
     const message = error instanceof Error ? error.message : "Search failed.";
     if (error instanceof HttpError) {
       if (error.status === 404) return c.json({ error: message }, 404);
+      if (error.status === 502) return c.json({ error: message }, 502);
       return c.json({ error: message }, 400);
     }
     console.error(JSON.stringify({ event: "search_error", message }));

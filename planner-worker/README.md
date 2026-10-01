@@ -22,6 +22,8 @@ Secrets are read from the Worker `env` and are never committed:
 
 If Duffel, Nuitee, or Gemini is missing, `/api/search` stays in **demo mode** and returns a sample flight, hotel, and day-by-day plan so the preview is clickable. Demo copy is labeled as a preview, not a live fare.
 
+Dates must be `YYYY-MM-DD`. Departure has to be today or later in America/New_York, and the return date has to be after departure. Those mistakes are HTTP 400. Duffel or Nuitee client errors (4xx) are also HTTP 400. Their server errors are HTTP 502.
+
 The Express app in `planner/` still uses OpenAI on Render. This Worker does not.
 
 ## Local

@@ -1,4 +1,4 @@
-import { HttpError } from "./errors";
+import { HttpError, upstreamClientError } from "./errors";
 import {
   arr,
   durationMinutes,
@@ -116,7 +116,7 @@ async function duffelPlaceSuggestions(query: string, token: string): Promise<Duf
   const response = await fetch(url, { headers: duffelHeaders(token) });
   const payload = rec(await readResponseJson(response));
   if (!response.ok) {
-    throw new Error(errorText(arr(payload.errors)[0]) || `Duffel place search failed with status ${response.status}.`);
+    throw upstreamClientError(response.status, errorText(arr(payload.errors)[0]) || `Duffel place search failed with status ${response.status}.`);
   }
   return arr(payload.data).map(asPlace).filter((place): place is DuffelPlace => place !== null);
 }
@@ -365,7 +365,7 @@ async function refreshDuffelOffer(offerId: string, token: string): Promise<unkno
   const response = await fetch(url, { headers: duffelHeaders(token) });
   const payload = rec(await readResponseJson(response));
   if (!response.ok) {
-    throw new Error(errorText(arr(payload.errors)[0]) || `Duffel offer refresh failed with status ${response.status}.`);
+    throw upstreamClientError(response.status, errorText(arr(payload.errors)[0]) || `Duffel offer refresh failed with status ${response.status}.`);
   }
   return payload.data ?? null;
 }
@@ -388,7 +388,7 @@ async function searchDuffelFlights(input: ResolvedTrip, token: string): Promise<
   });
   const requestPayload = rec(await readResponseJson(requestResponse));
   if (!requestResponse.ok) {
-    throw new Error(errorText(arr(requestPayload.errors)[0]) || `Duffel request failed with status ${requestResponse.status}.`);
+    throw upstreamClientError(requestResponse.status, errorText(arr(requestPayload.errors)[0]) || `Duffel request failed with status ${requestResponse.status}.`);
   }
   const requestId = str(rec(requestPayload.data).id);
   if (!requestId) throw new Error("Duffel did not return an offer request ID.");
@@ -400,7 +400,7 @@ async function searchDuffelFlights(input: ResolvedTrip, token: string): Promise<
   const offersResponse = await fetch(offersUrl, { headers: duffelHeaders(token) });
   const offersPayload = rec(await readResponseJson(offersResponse));
   if (!offersResponse.ok) {
-    throw new Error(errorText(arr(offersPayload.errors)[0]) || `Duffel offers list failed with status ${offersResponse.status}.`);
+    throw upstreamClientError(offersResponse.status, errorText(arr(offersPayload.errors)[0]) || `Duffel offers list failed with status ${offersResponse.status}.`);
   }
   const maxTotal = maxReasonableFlightTotal(input);
   return arr(offersPayload.data)
@@ -538,7 +538,7 @@ async function searchNuiteeHotels(input: ResolvedTrip, key: string): Promise<Hot
   if (response.status === 204) return [];
   const payload = rec(await readResponseJson(response, "raw"));
   if (!response.ok) {
-    throw new Error(`Nuitee rates (${response.status}): ${errorText(payload.errors || payload.error || payload.message || payload)}`);
+    throw upstreamClientError(response.status, `Nuitee rates (${response.status}): ${errorText(payload.errors || payload.error || payload.message || payload)}`);
   }
   const hotelDataRows = Array.isArray(payload.hotels) ? payload.hotels : Array.isArray(payload.hotelData) ? payload.hotelData : [];
   const hotelData = new Map(hotelDataRows.map((hotel) => {

@@ -40,6 +40,10 @@
 const API_BASE=''; // same-origin Worker routes: /api/search, /api/maps-config, /api/places, /health
 fetch(`${API_BASE}/health`).then(r=>r.json()).then(h=>{const banner=document.getElementById('runtimeBanner');if(!banner)return;const base='Cloudflare Workers preview. The public marketing site still opens the Render planner.';banner.textContent=h.mode==='demo'?`${base} Demo mode is on because Duffel, Nuitee, or Gemini is not configured, so this search uses a sample flight, hotel, and itinerary.`:h.mode?`${base} Travel keys are configured on this Worker.`:base}).catch(()=>{});
 const start=document.getElementById('start'),end=document.getElementById('end');const d=new Date();d.setDate(d.getDate()+60);start.value=d.toISOString().slice(0,10);d.setDate(d.getDate()+7);end.value=d.toISOString().slice(0,10);
+function isoLocal(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
+const todayIso=isoLocal(new Date());start.min=todayIso;
+function syncEndMin(){const base=start.value&&start.value>=todayIso?start.value:todayIso;const next=new Date(`${base}T00:00:00`);next.setDate(next.getDate()+1);const minIso=isoLocal(next);end.min=minIso;if(end.value&&end.value<minIso)end.value=minIso}
+start.addEventListener('change',syncEndMin);syncEndMin();
 const money=(n,c='USD')=>new Intl.NumberFormat('en-US',{style:'currency',currency:c,maximumFractionDigits:0}).format(Number(n)||0);
 const dateTime=v=>{if(!v)return'';const x=new Date(v);return Number.isNaN(x.getTime())?String(v):new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(x)};
 const durationText=v=>String(v||'').replace(/^PT/,'').replace('H','h ').replace('M','m').trim();
