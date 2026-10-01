@@ -32,8 +32,8 @@ interface RawAiPlan {
 
 const DUFFEL_BASE = "https://api.duffel.com";
 const NUITEE_BASE = "https://api.liteapi.travel/v3.0";
-/** Listed generateContent id: https://ai.google.dev/gemini-api/docs/models — Gemini 2.5 Flash-Lite. */
-export const GEMINI_MODEL = "gemini-2.5-flash-lite";
+/** gemini-2.5-flash-lite is rejected for new API keys. Use Gemini 3.5 Flash-Lite. */
+export const GEMINI_MODEL = "gemini-3.5-flash-lite";
 
 interface ResolvedTrip extends TripInput {
   originCode: string;

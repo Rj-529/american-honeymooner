@@ -17,7 +17,7 @@ Secrets are read from the Worker `env` and are never committed:
 - `DUFFEL_ACCESS_TOKEN`
 - `DUFFEL_ENV` (`test` by default, `live` for live Duffel)
 - `NUITEE_API_KEY`
-- `GEMINI_API_KEY` (Google AI Studio; model `gemini-2.5-flash-lite`)
+- `GEMINI_API_KEY` (Google AI Studio; model `gemini-3.5-flash-lite`)
 - `GOOGLE_MAPS_API_KEY`
 
 If Duffel, Nuitee, or Gemini is missing, `/api/search` stays in **demo mode** and returns a sample flight, hotel, and day-by-day plan so the preview is clickable. Demo copy is labeled as a preview, not a live fare.

@@ -66,11 +66,11 @@ describe("demo mode", () => {
 });
 
 describe("Gemini Flash-Lite", () => {
-  it("calls generateContent on gemini-2.5-flash-lite and asks for JSON", () => {
-    expect(GEMINI_MODEL).toBe("gemini-2.5-flash-lite");
+  it("calls generateContent on gemini-3.5-flash-lite and asks for JSON", () => {
+    expect(GEMINI_MODEL).toBe("gemini-3.5-flash-lite");
     expect(GEMINI_MODEL.toLowerCase()).not.toContain("pro");
     expect(geminiGenerateUrl()).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent",
     );
     expect(geminiRequestBody("resolve this trip").generationConfig.responseMimeType).toBe("application/json");
   });
