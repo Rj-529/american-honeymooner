@@ -1,0 +1,7 @@
+# Copy to .dev.vars for local `wrangler dev`. Never commit .dev.vars.
+# Leave travel keys empty to exercise demo mode.
+DUFFEL_ACCESS_TOKEN=
+DUFFEL_ENV=test
+NUITEE_API_KEY=
+GEMINI_API_KEY=
+GOOGLE_MAPS_API_KEY=

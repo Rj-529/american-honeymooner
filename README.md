@@ -2,7 +2,9 @@
 
 Marketing site for American Honeymooner — an old-money-inspired honeymoon brand experience.
 
-`planner/` is the Express honeymoon planner. Run it with `cd planner && npm install && npm run dev`. It stays deployed separately for now (Render); the marketing site at the repo root remains static on Cloudflare Pages.
+`planner/` is the Express honeymoon planner. Run it with `cd planner && npm install && npm run dev`. It stays deployed on Render and remains the live planner. The marketing site at the repo root remains static on Cloudflare Pages, and its Planner links keep pointing at Render.
+
+`planner-worker/` is a parallel Cloudflare Workers preview of that same planner (`american-honeymooner-planner` on `*.workers.dev`). It is not linked from the marketing site, and it does not replace Render.
 
 ## Current stack (launched)
 
@@ -67,7 +69,7 @@ Intended capabilities (requirements TBD; do not invent prior planner behavior):
 - Saved trips and user accounts
 - Booking / reservation outbound links where appropriate
 
-Integration approach: add planner routes or a sibling Worker project and link from the existing nav — avoid rebuilding the marketing site.
+A sibling Worker preview now lives in `planner-worker/`. Do not point the marketing-site Planner links at it unless a cutover is explicitly approved. Render stays the live planner. Avoid rebuilding the marketing site.
 
 ### 3. Shopify merchandise store (future)
 
