@@ -32,7 +32,8 @@ interface RawAiPlan {
 
 const DUFFEL_BASE = "https://api.duffel.com";
 const NUITEE_BASE = "https://api.liteapi.travel/v3.0";
-export const OPENAI_MODEL = "gpt-5.6-luna";
+/** Listed generateContent id: https://ai.google.dev/gemini-api/docs/models — Gemini 2.5 Flash-Lite. */
+export const GEMINI_MODEL = "gemini-2.5-flash-lite";
 
 interface ResolvedTrip extends TripInput {
   originCode: string;
@@ -130,15 +131,26 @@ async function verifyAirportCode(code: string, token: string): Promise<DuffelPla
   }
 }
 
-function outputText(payload: unknown): string {
-  const record = rec(payload);
-  if (typeof record.output_text === "string" && record.output_text.trim()) return record.output_text;
+export function geminiGenerateUrl(model: string = GEMINI_MODEL): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+}
+
+export function geminiRequestBody(prompt: string): {
+  contents: Array<{ role: "user"; parts: Array<{ text: string }> }>;
+  generationConfig: { responseMimeType: "application/json" };
+} {
+  return {
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json" },
+  };
+}
+
+function geminiOutputText(payload: unknown): string {
   const parts: string[] = [];
-  for (const item of arr(record.output)) {
-    const content = rec(item);
-    for (const block of arr(content.content)) {
-      const piece = rec(block);
-      if (piece.type === "output_text" && typeof piece.text === "string") parts.push(piece.text);
+  for (const candidate of arr(rec(payload).candidates)) {
+    for (const part of arr(rec(rec(candidate).content).parts)) {
+      const text = str(rec(part).text);
+      if (text) parts.push(text);
     }
   }
   return parts.join("");
@@ -171,35 +183,33 @@ function parseModelJson(text: string): unknown {
   return null;
 }
 
-async function openAIText(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch("https://api.openai.com/v1/responses", {
+async function geminiText(apiKey: string, prompt: string): Promise<string> {
+  const response = await fetch(geminiGenerateUrl(), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
+      "x-goog-api-key": apiKey,
     },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      reasoning: { effort: "low" },
-      input: prompt,
-      store: false,
-    }),
+    body: JSON.stringify(geminiRequestBody(prompt)),
   });
   const payload = await readResponseJson(response);
   if (!response.ok) {
-    throw new Error(errorText(rec(payload).error) || `OpenAI request failed with status ${response.status}.`);
+    throw new Error(errorText(rec(payload).error) || `Gemini request failed with status ${response.status}.`);
   }
-  return outputText(payload);
+  const text = geminiOutputText(payload);
+  if (text) return text;
+  const blocked = errorText(rec(payload).promptFeedback);
+  throw new Error(blocked || "Gemini returned no text.");
 }
 
 async function resolveTripGeography(input: TripInput, secrets: PlannerSecrets): Promise<ResolvedTrip> {
   const originText = input.originName.trim();
   const destinationText = input.destinationName.trim();
   if (!originText || !destinationText) throw new Error("Enter where you are leaving from and where you want to go.");
-  if (!secrets.openAIKey) throw new Error("OpenAI is required to interpret natural-language destinations.");
+  if (!secrets.geminiKey) throw new Error("Gemini is required to interpret natural-language destinations.");
   const token = requireDuffel(secrets);
   const prompt = `Resolve a leisure trip into practical flight gateways and hotel-search geography. The traveler types human places, not airport codes.\n\nOrigin: ${originText}\nDestination: ${destinationText}\n\nReturn JSON only with: originAirportCode, originAirportName, destinationAirportCode, destinationAirportName, destinationCountryCode (ISO-2), hotelSearchCities (array of 1-3 actual cities/towns appropriate for lodging in the requested destination), destinationDisplayName, explanation.\n\nRules: choose practical major commercial airports. For a region/island/coast, choose the airport a leisure traveler would realistically fly into, but keep the requested region as destinationDisplayName. Example: Chicago to Amalfi Coast should normally resolve to Chicago's practical commercial gateway and Naples NAP, while hotelSearchCities should be Amalfi-area towns such as Amalfi, Positano, or Ravello. Do not invent airport codes.`;
-  const text = await openAIText(secrets.openAIKey, prompt);
+  const text = await geminiText(secrets.geminiKey, prompt);
   const resolved = rec(parseModelJson(text));
   if (!Object.keys(resolved).length) {
     throw new Error("Could not interpret the trip locations. Try slightly more specific place names.");
@@ -716,7 +726,7 @@ async function buildAIPlan(input: TripInput, travelData: Pick<SearchSuccess, "ge
     hotel: travelData.selectedHotel,
   };
   const prompt = `You are the planning engine for American Honeymooner. Build ONE honeymoon plan only, labeled GO FOR IT. The user has already been matched to one flight and one hotel. Respect the requested destination even when the flight lands at a gateway airport. Nuitee hotel totals are full-stay totals. The selected hotel room has been filtered for a single king-bed setup suitable for a honeymoon. The hotel selection is intentionally luxury-first: favor polished 4-5 star, resort, boutique, palace, villa, suite, spa, view, terrace, pool and high-end honeymoon properties; never frame a basic, budget, hostel, motel, dorm, shared-bathroom or business-style property as acceptable luxury. Do not suggest switching to two queens or twin beds. Do not invent flight or hotel prices. Use the available trip budget for excellent dining, activities, local transportation and romantic experiences rather than leaving large amounts unused. In whyItWorks, include 2-3 concise, practical honeymoon tips. One should normally remind the couple to tell the hotel when booking that it is their honeymoon because hotels may offer a nicer room, welcome amenity, champagne, upgrade, or late checkout when available; never promise an upgrade or free amenity. Other tips can cover restaurant reservations, airport transfers, room requests, special-occasion notes, or booking timing. Return JSON only with summary and options, where options contains exactly one object with label,title,flightId,hotelId,whyItWorks,itinerary[{day,title,morning,afternoon,evening}]. No markdown.\n\nTraveler input:\n${JSON.stringify(input, null, 2)}\n\nTravel data:\n${JSON.stringify(leanData, null, 2)}`;
-  const text = await openAIText(apiKey, prompt);
+  const text = await geminiText(apiKey, prompt);
   const parsed = parseModelJson(text);
   if (isRecord(parsed)) return { summary: str(parsed.summary), options: arr(parsed.options) };
   return { summary: text || "", options: [] };
@@ -839,13 +849,13 @@ export async function runLiveSearch(input: TripInput, secrets: PlannerSecrets): 
     selectedFlight,
     selectedHotel,
   };
-  const rawAIPlan = secrets.openAIKey ? await buildAIPlan(input, travelData, secrets.openAIKey) : null;
+  const rawAIPlan = secrets.geminiKey ? await buildAIPlan(input, travelData, secrets.geminiKey) : null;
   const aiPlan = normalizeAIPlan(rawAIPlan, travelData, input);
   return {
     ...travelData,
     flights: [selectedFlight],
     hotels: [selectedHotel],
     aiPlan,
-    aiModel: OPENAI_MODEL,
+    aiModel: GEMINI_MODEL,
   };
 }

@@ -12,14 +12,14 @@ export function readSecrets(env: Env): PlannerSecrets {
     duffelToken: stringSecret(env, "DUFFEL_ACCESS_TOKEN"),
     duffelEnv: (stringSecret(env, "DUFFEL_ENV") || "test").toLowerCase(),
     nuiteeKey: stringSecret(env, "NUITEE_API_KEY"),
-    openAIKey: stringSecret(env, "OPENAI_API_KEY"),
+    geminiKey: stringSecret(env, "GEMINI_API_KEY"),
     googleMapsKey: stringSecret(env, "GOOGLE_MAPS_API_KEY"),
   };
 }
 
-/** Live search needs Duffel, Nuitee, and OpenAI. Anything missing stays in demo mode. */
+/** Live search needs Duffel, Nuitee, and Gemini. Anything missing stays in demo mode. */
 export function isDemoMode(secrets: PlannerSecrets): boolean {
-  return !secrets.duffelToken || !secrets.nuiteeKey || !secrets.openAIKey;
+  return !secrets.duffelToken || !secrets.nuiteeKey || !secrets.geminiKey;
 }
 
 export function plannerMode(secrets: PlannerSecrets): "demo" | "duffel_test" | "live" {

@@ -256,7 +256,7 @@ export function buildDemoSearch(input: TripInput): SearchSuccess {
     destinationAirportName: destination.airportName,
     destinationDisplayName: input.destinationName,
     hotelSearchCities: destination.hotelCities || [destination.city],
-    explanation: "Preview geography. Airport codes are illustrative until Duffel and OpenAI are configured.",
+    explanation: "Preview geography. Airport codes are illustrative until Duffel and Gemini are configured.",
   };
   const styleLine = input.styles.length ? input.styles.join(", ") : "romantic";
   const noteLine = input.notes.trim() ? ` Your note: ${input.notes.trim()}` : "";

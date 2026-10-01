@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseTripInput } from "../src/input";
 import { buildDemoSearch, demoPlaceSuggestions } from "../src/mock";
 import { isDemoMode } from "../src/secrets";
-import { chooseGoForItPairing, kingRoomCandidate, luxuryHotelScore } from "../src/travel";
+import { GEMINI_MODEL, chooseGoForItPairing, geminiGenerateUrl, geminiRequestBody, kingRoomCandidate, luxuryHotelScore } from "../src/travel";
 import type { FlightOffer, HotelOffer, PlannerSecrets } from "../src/types";
 
 const secrets = (overrides: Partial<PlannerSecrets> = {}): PlannerSecrets => ({
@@ -11,10 +11,10 @@ const secrets = (overrides: Partial<PlannerSecrets> = {}): PlannerSecrets => ({
 });
 
 describe("demo mode", () => {
-  it("turns on when any travel or OpenAI key is missing", () => {
+  it("turns on when Duffel, Nuitee, or Gemini is missing", () => {
     expect(isDemoMode(secrets())).toBe(true);
     expect(isDemoMode(secrets({ duffelToken: "x", nuiteeKey: "y" }))).toBe(true);
-    expect(isDemoMode(secrets({ duffelToken: "x", nuiteeKey: "y", openAIKey: "z" }))).toBe(false);
+    expect(isDemoMode(secrets({ duffelToken: "x", nuiteeKey: "y", geminiKey: "z" }))).toBe(false);
   });
 
   it("builds a clickable Chicago to Amalfi plan inside the budget", () => {
@@ -62,6 +62,17 @@ describe("demo mode", () => {
   it("suggests preview airports without Duffel", () => {
     expect(demoPlaceSuggestions("c")).toEqual([]);
     expect(demoPlaceSuggestions("chicago")[0]?.iataCode).toBe("ORD");
+  });
+});
+
+describe("Gemini Flash-Lite", () => {
+  it("calls generateContent on gemini-2.5-flash-lite and asks for JSON", () => {
+    expect(GEMINI_MODEL).toBe("gemini-2.5-flash-lite");
+    expect(GEMINI_MODEL.toLowerCase()).not.toContain("pro");
+    expect(geminiGenerateUrl()).toBe(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+    );
+    expect(geminiRequestBody("resolve this trip").generationConfig.responseMimeType).toBe("application/json");
   });
 });
 

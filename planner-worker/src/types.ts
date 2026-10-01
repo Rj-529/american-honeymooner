@@ -184,7 +184,7 @@ export interface PlannerSecrets {
   duffelToken?: string;
   duffelEnv: string;
   nuiteeKey?: string;
-  openAIKey?: string;
+  geminiKey?: string;
   googleMapsKey?: string;
 }
 

@@ -4,7 +4,7 @@ import { HttpError } from "./errors";
 import { parseTripInput } from "./input";
 import { buildDemoSearch, demoPlaceSuggestions } from "./mock";
 import { isDemoMode, plannerMode, readSecrets } from "./secrets";
-import { OPENAI_MODEL, runLiveSearch, searchPlaces } from "./travel";
+import { GEMINI_MODEL, runLiveSearch, searchPlaces } from "./travel";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -18,8 +18,8 @@ app.get("/health", (c) => {
     duffelConfigured: Boolean(secrets.duffelToken),
     nuiteeConfigured: Boolean(secrets.nuiteeKey),
     googleMapsConfigured: Boolean(secrets.googleMapsKey),
-    openAIConfigured: Boolean(secrets.openAIKey),
-    openAIModel: OPENAI_MODEL,
+    geminiConfigured: Boolean(secrets.geminiKey),
+    geminiModel: GEMINI_MODEL,
   });
 });
 
